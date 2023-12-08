@@ -53,7 +53,7 @@ def run_dvc_command(command):
         print(f"{command} failed with {result.stderr}")
 
 # # DVC commands
-remote_add_command = [sys.executable, "-m", "dvc", "remote", "add", "--default", "gcs", "gs://de_pipelines/light_classifier_data"]
+remote_add_command = [sys.executable, "-m", "dvc", "remote", "add", "--default", "gcs", "gs://de_pipelines/luminosity_classifier_data"]
 # config_command = [sys.executable, "-m", "dvc", "config", "core.hardlink_lock", "true"]
 # dvc_tmp_lock_remove = [sys.executable, "rm", ".dvc/tmp/lock"]
 # remote_list_command = [sys.executable, "-m", "dvc", "remote", "list"]

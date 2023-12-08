@@ -40,7 +40,7 @@ import os
 
 # Define your GCS bucket and paths
 bucket_name = "de_pipelines"
-source_folder = "light_classifier_data"
+source_folder = "luminosity_classifier_data"
 destination_folders = ["data", "models"]  # You can change this to "models" for the other folder
 
 # Initialize the GCS client with your service account credentials
