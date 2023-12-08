@@ -1,0 +1,33 @@
+# # Ignore all files in the models directory
+# models/*
+
+# # Ignore all files in the data directory
+# data/*
+
+# !.dvc
+# .dvc/*
+# !/.dvc/config
+# !/.dvc/cache
+# !/.dvc/tmp
+# !/.dvc/state
+# !/.dvc/plots
+# !/.dvc/tmp.index
+/models
+/data
+# Include DVC metafiles and directories
+# .dvc
+.dvc/*
+!/.dvc/config
+!/.dvc/cache
+!/.dvc/tmp
+!/.dvc/state
+!/.dvc/plots
+!/.dvc/tmp.index
+lclassifier_env/*
+.ipynb_checkpoints/*
+.DS_Store
+config/*
+.streamlit/secrets.toml
+__pycache__
+*.ipynb
+.devcontainer

@@ -1,0 +1,24 @@
+pandas
+numpy
+spacy
+nltk
+transformers
+scikit-learn
+beautifulsoup4
+tqdm
+python-dotenv
+pipreqs
+streamlit
+torch
+dvc
+google-cloud-storage
+dvc[gs]
+PyMuPDF
+# PyPDF2
+# PyMuPDF
+# swifter
+# openai
+# llama-cpp-python
+# jupyterlab
+# ipykernel
+# dvc[gdrive]
