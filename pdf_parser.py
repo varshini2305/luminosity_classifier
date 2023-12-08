@@ -26,18 +26,22 @@ nltk.download('averaged_perceptron_tagger')
 # from tqdm import tqdm
 
 def parse_pdf_from_url(pdf_url):
-    response = requests.get(pdf_url)
-    if response.status_code == 200:
-        pdf_bytes = response.content
-        pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
-        # Extract text from each page
-        pdf_text = ""
-        for page_number in range(pdf_document.page_count):
-            page = pdf_document[page_number]
-            pdf_text += page.get_text()
-        pdf_document.close()
-    else:
-        pdf_text = None
+    try:
+        response = requests.get(pdf_url)
+        if response.status_code == 200:
+            pdf_bytes = response.content
+            pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+            # Extract text from each page
+            pdf_text = ""
+            for page_number in range(pdf_document.page_count):
+                page = pdf_document[page_number]
+                pdf_text += page.get_text()
+            pdf_document.close()
+        else:
+            pdf_text = ''
+    except Exception:
+        logging.error(f"{pdf_url}")
+        pdf_text = ''
     return pdf_text
 
 #preprocessing parsed_text
@@ -113,7 +117,7 @@ def remove_empty(x):
     return x
 
 light_stop_words = ['led', 'bulb', 'bulbs', 'xenon', 'filament', 'light', 'lights', 'backlight', 'daylight', 'lumen', 'lamp', 'lamps', 'lumens', 'leds','nightlight',
-'lamping', 'neon', 'incandescent',  'fluorescent', 'fluorescents', 'downlights','downlight']
+'lamping', 'neon', 'incandescent', 'fluorescents', 'downlights','downlight']
 
 pattern = "(" + light_stop_words[0]
 # create a substring pattern
@@ -343,9 +347,13 @@ def predict_if_lighting(x):
 
 
 
-def predict_luminosity_from_url(url):
+def predict_luminosity_from_url(text, bulk_process: bool = False):
     
-    processed_lines = process_url(url)
+    if bulk_process is False:
+        processed_lines = process_url(text)
+    else:
+        processed_lines = text 
+    
     light_phrase_index, light_phrase, rule_based_prediction = check_lighting(processed_lines)
     
     # if first level of rule based prediction results in True, additional check to reject if it denotes light fixtures/add-ons
@@ -354,9 +362,10 @@ def predict_luminosity_from_url(url):
     
     if rule_based_prediction is True:
         # additional check to confirm positives using trained bert model with training data
-        bert_if_lighting = predict_if_lighting(light_phrase)
+        bert_if_lighting, confidence_score = predict_if_lighting(light_phrase)
     else:
         bert_if_lighting = False
+        confidence_score = 1
     
-    bert_if_lighting, confidence_score = predict_if_lighting(light_phrase)
+    # bert_if_lighting, confidence_score = predict_if_lighting(light_phrase)
     return bert_if_lighting and rule_based_prediction, processed_lines, light_phrase, confidence_score

@@ -32,3 +32,4 @@ __pycache__
 *.ipynb
 !light_classifier_analysis.ipynb
 .devcontainer
+temp/
