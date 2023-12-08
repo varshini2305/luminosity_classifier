@@ -30,4 +30,5 @@ config/*
 .streamlit/secrets.toml
 __pycache__
 *.ipynb
+!light_classifier_analysis.ipynb
 .devcontainer
