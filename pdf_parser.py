@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import fitz
+import logging
 import re
 from functools import lru_cache
 # streamlit run main.py
@@ -83,7 +84,17 @@ def preprocess_text(lines):
 
             processed_text = re.sub(remove_special_character_pattern, '', processed_text)
             processed_text = processed_text.strip(' ')
+            
+            # remove articles in the end if any
+            processed_text = processed_text.strip(' a')
+            if processed_text.startswith('the ') or processed_text.endswith(' the'):
+                processed_text = processed_text.strip('the')
+            if processed_text.startswith('a ') or processed_text.endswith(' a'):
+                processed_text = processed_text.strip('a ')
+            
+            processed_text = processed_text.strip()
             processed_text = lowercase(processed_text)
+            
             updated_lines.append(processed_text)
 
     return updated_lines
@@ -120,20 +131,22 @@ def process_url(url):
     if 'www.' in url or '.pdf' in url:
         parsed_text = parse_pdf_from_url(url)
     else:
-        parsed_text = 'url'
+        parsed_text = url
     
     parsed_lines  = preprocess_text(parsed_text.split('\n'))
     parsed_lines = remove_empty(parsed_lines)
     parsed_lines = list(set(parsed_lines))
     return parsed_lines
 
-fixture_lookaheads = ['socket', 'troffer', 'holder', 'fixture', 'sensor', 'controller', 'transformer']
-fixture_lookaheads_plural = []
+fixture_words = ['socket', 'troffer', 'holder', 'fixture', 'sensor', 'controller', 'transformer']
+fixture_words_plural = []
 
-for f in fixture_lookaheads:
-    fixture_lookaheads_plural.append(f+'s')
+fixture_lookaheads = ['of ', 'for ', 'without', 'with '] # usual represents association with a lighting product and not a lighting product itself
 
-fixture_lookaheads = fixture_lookaheads_plural+fixture_lookaheads
+for f in fixture_words:
+    fixture_words_plural.append(f+'s')
+
+fixture_words = fixture_words_plural+fixture_words
 
 
 def check_substr(substr, text):
@@ -141,37 +154,52 @@ def check_substr(substr, text):
         return True, text
     return False, text
 
-
 def check_for_negative_lookaheads(light_phrase_index, predict_lighting, parsed_lines):
     try:
         light_phrase_index = int(light_phrase_index + 1)
         for lindex, l in enumerate(parsed_lines[:light_phrase_index]):
                 # tokens = nltk.word_tokenize(l)
                 tokens = re.split(r'[ ,.,\n]+', l)
-                fixture_words = list(set(fixture_lookaheads) & set(tokens))
-                if fixture_words:
-                    return lindex, l, False
+                fixture_word_match = list(set(fixture_words) & set(tokens))
+                if fixture_word_match:
+                    return lindex, False
     except Exception as e:
-        print(f"{e=}")
+        logging.exception("traceback as follows")
         
     return light_phrase_index, predict_lighting
             
 
 def check_lighting(parsed_lines):
-    fixture_words = []
+    previous_line_ends_with_word = None
+    
     for lindex, l in enumerate(parsed_lines):
         tokens = nltk.word_tokenize(l)
         light_words = list(set(light_stop_words) & set(tokens))
-        fw = list(set(fixture_lookaheads) & set(tokens))
-        if fw:
-            fixture_words = fw
+        
+        # print(f"1st rule based check - {light_words}, {tokens=}, {l=}")
+        
+        for lw in light_words:
+                li = l.find(lw)
+                
+                fixture_lookaheads_index = next((l.index(word) for word in fixture_lookaheads if word in l), -1)
+                
+                if lindex>0:
+                    previous_line_ends_with_word = any(parsed_lines[lindex-1].endswith(word) for word in fixture_lookaheads)
+                    # print(f"{previous_line_ends_with_word=}")
+
+                
+                # print(f"{fixture_lookaheads_index=}, {lw=}, {l=}")
+                
+                if  (fixture_lookaheads_index != -1 and fixture_lookaheads_index < li) or (previous_line_ends_with_word is True):
+                    light_words = None 
+                    # if with or without precedes light related synonym in a line of text it describes 
+                    # an association with a lighting product and not denote lighting product itself
         if light_words:
             pos_tags = nltk.pos_tag(tokens)
             for tk, tag in pos_tags:
                 if tk in light_words and tag in ['NN', 'NNS', 'JJ']:
-                    # if fixture_words == []:
                     return lindex, l, True
-    return None, None, False
+    return None, '', False
 
 
 
@@ -319,15 +347,16 @@ def predict_luminosity_from_url(url):
     
     processed_lines = process_url(url)
     light_phrase_index, light_phrase, rule_based_prediction = check_lighting(processed_lines)
-    light_phrase_index, rule_based_prediction = check_for_negative_lookaheads(light_phrase_index, rule_based_prediction, processed_lines)
+    
+    # if first level of rule based prediction results in True, additional check to reject if it denotes light fixtures/add-ons
+    if light_phrase:
+        light_phrase_index, rule_based_prediction = check_for_negative_lookaheads(light_phrase_index, rule_based_prediction, processed_lines)
+    
     if rule_based_prediction is True:
+        # additional check to confirm positives using trained bert model with training data
         bert_if_lighting = predict_if_lighting(light_phrase)
     else:
         bert_if_lighting = False
-
-    if light_phrase is None:
-        light_phrase = processed_lines[0]
-        # product_title = processed_lines[0]
-    # product_title = light_phrase
-    bert_if_lighting = predict_if_lighting(light_phrase)
-    return bert_if_lighting and rule_based_prediction, light_phrase
+    
+    bert_if_lighting, confidence_score = predict_if_lighting(light_phrase)
+    return bert_if_lighting and rule_based_prediction, processed_lines, light_phrase, confidence_score

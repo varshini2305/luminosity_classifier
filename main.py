@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.linear_model import LogisticRegression
+import transformers
 from transformers import AutoTokenizer, AutoModel
 from functools import lru_cache
 import numpy as np
@@ -76,13 +77,21 @@ def main():
     
 
     if product_name:
-        if 'www.' in product_name or '.pdf' in product_name:
+        # if 'www.' in product_name or '.pdf' in product_name:
             # is_lighting, confidence_score = predict_if_lighting(product_name)
-            is_lighting, product_title = predict_luminosity_from_url(product_name)
-            st.write(f"The product '{product_title}' is lighting: {is_lighting}")
-        else:
-            is_lighting, confidence_score = predict_if_lighting(product_name)
-            st.write(f"The product '{product_name}' luminosity : {is_lighting} with confidence {confidence_score}")
+        is_lighting, product_desc, light_phrase, confidence_score = predict_luminosity_from_url(product_name)
+        st.write(f"Is it a lighting product? {'Yes' if is_lighting is True else 'No'}")
+        # Create an expander with a title
+        with st.expander("Product Description"):
+            # Display the long text inside the expander
+            st.write(product_desc)
+        with st.expander("First Matching phrase with light synonymns (if any)"):
+            st.write(light_phrase)
+        with st.expander("Confidence Score"):
+            st.write(confidence_score)
+        # else:
+        #     is_lighting, confidence_score = predict_if_lighting(product_name)
+        #     st.write(f"The product '{product_name}' luminosity : {is_lighting} with confidence {confidence_score}")
 
 # Run the app
 if __name__ == "__main__":
