@@ -26,3 +26,8 @@
 
 ### Luminosity Classifier web app - 
 https://luminosity-classifier.streamlit.app/
+
+
+### Time taken for implementation
+- ~ 5 hours (Until model performance)
+- However, the streamlit deployment with gcs set up had many issues, so troubleshooting and hosting it took more time. (1-2 hrs)
