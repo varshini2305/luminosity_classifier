@@ -1,0 +1,5 @@
+[core]
+    remote = gcp
+    autostage = true
+['remote "gcp"']
+    url = gs://de_pipelines/luminosity_classifier_data
