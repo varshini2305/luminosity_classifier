@@ -72,11 +72,19 @@ from pdf_parser import predict_luminosity_from_url, predict_if_lighting
 
 # Streamlit app
 def main():
-    st.title("Product Classification App")
-    product_name = st.text_input("Enter the product pdf url:")
+    st.title("Luminosity Classifier")
+    product_name = st.text_input("Enter the product pdf url:", placeholder='white troffers used for led lamps')
+    with st.expander("Sample Inputs"):
+        st.write("1. 'https://www.exitlightco.com/pdf/COMBOCA.pdf' - CAST ALUMINUM EXIT SIGN RED OR GREEN LED WITH LED EMERGENCY LIGHTS - Luminous")
+        st.write("2. 'White led lamps' - Luminous")
+        st.write("3. 'https://www.topbrasslighting.com/wp-content/uploads/TopBrass-138.09-tearsheet-Jun12018.pdf' - SCALLOPED SEMI-FLUSH (Light Fixture) - Non-Luminous")
+        st.write("4. 'white troffers used for led lamps' - Non-Luminous")
+    
+    luminosity_check = st.button("Check Luminosity")
+
     
 
-    if product_name:
+    if luminosity_check:
         # if 'www.' in product_name or '.pdf' in product_name:
             # is_lighting, confidence_score = predict_if_lighting(product_name)
         is_lighting, product_desc, light_phrase, confidence_score = predict_luminosity_from_url(product_name)
